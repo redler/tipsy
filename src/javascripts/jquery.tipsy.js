@@ -6,12 +6,12 @@
 (function($) {
     
     function maybeCall(thing, ctx) {
-        return (typeof thing == 'function') ? (thing.call(ctx)) : thing;
+        return (typeof thing === 'function') ? (thing.call(ctx)) : thing;
     };
     
     function isElementInDOM(ele) {
       while (ele = ele.parentNode) {
-        if (ele == document) return true;
+        if (ele === document) return true;
       }
       return false;
     };
@@ -58,8 +58,8 @@
                         break;
                 }
                 
-                if (gravity.length == 2) {
-                    if (gravity.charAt(1) == 'w') {
+                if (gravity.length === 2) {
+                    if (gravity.charAt(1) === 'w') {
                         tp.left = pos.left + pos.width / 2 - 15;
                     } else {
                         tp.left = pos.left + pos.width / 2 - actualWidth + 15;
@@ -90,7 +90,7 @@
         
         fixTitle: function() {
             var $e = this.$element;
-            if ($e.attr('title') || typeof($e.attr('original-title')) != 'string') {
+            if ($e.attr('title') || typeof($e.attr('original-title')) !== 'string') {
                 $e.attr('original-title', $e.attr('title') || '').removeAttr('title');
             }
         },
@@ -99,9 +99,9 @@
             var title, $e = this.$element, o = this.options;
             this.fixTitle();
             var title, o = this.options;
-            if (typeof o.title == 'string') {
-                title = $e.attr(o.title == 'title' ? 'original-title' : o.title);
-            } else if (typeof o.title == 'function') {
+            if (typeof o.title === 'string') {
+                title = $e.attr(o.title === 'title' ? 'original-title' : o.title);
+            } else if (typeof o.title === 'function') {
                 title = o.title.call($e[0]);
             }
             title = ('' + title).replace(/(^\s*|\s*$)/, "");
@@ -131,9 +131,9 @@
     
     $.fn.tipsy = function(options) {
         
-        if (options === true) {
+        if (!!options) {
             return this.data('tipsy');
-        } else if (typeof options == 'string') {
+        } else if (typeof options === 'string') {
             var tipsy = this.data('tipsy');
             if (tipsy) tipsy[options]();
             return this;
@@ -153,7 +153,7 @@
         function enter() {
             var tipsy = get(this);
             tipsy.hoverState = 'in';
-            if (options.delayIn == 0) {
+            if (options.delayIn === 0) {
                 tipsy.show();
             } else {
                 tipsy.fixTitle();
@@ -167,17 +167,22 @@
             if (options.delayOut == 0) {
                 tipsy.hide();
             } else {
-                setTimeout(function() { if (tipsy.hoverState == 'out') tipsy.hide(); }, options.delayOut);
+                setTimeout(function() { if (tipsy.hoverState === 'out') tipsy.hide(); }, options.delayOut);
             }
         };
         
         if (!options.live) this.each(function() { get(this); });
         
-        if (options.trigger != 'manual') {
-            var binder   = options.live ? 'live' : 'bind',
-                eventIn  = options.trigger == 'hover' ? 'mouseenter' : 'focus',
-                eventOut = options.trigger == 'hover' ? 'mouseleave' : 'blur';
-            this[binder](eventIn, enter)[binder](eventOut, leave);
+        if (options.trigger !== 'manual') {
+            var binder   = options.live ? ('on' in this ? 'on' : 'live') : 'bind',
+                eventIn  = options.trigger === 'hover' ? 'mouseenter' : 'focus',
+                eventOut = options.trigger === 'hover' ? 'mouseleave' : 'blur';
+ 
+	    if (options.live) {
+                $(this.context)[binder](eventIn, this.selector, enter)[binder](eventOut, this.selector, leave);
+            } else {
+                this[binder](eventIn, enter)[binder](eventOut, leave);
+            }
         }
         
         return this;
