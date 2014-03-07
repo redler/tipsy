@@ -77,6 +77,18 @@
                 } else {
                     $tip.css({visibility: 'visible', opacity: this.options.opacity});
                 }
+                
+                // when showing a new tip, first hide all other tips. Workaround for zombie tips.
+                if (this.options.solo) {
+                    $('.tipsy').not($tip).remove();
+                }
+
+                // belt and suspenders -- revalidate after two seconds on display of any tip, hopefully preventing unparented/zombie tips
+                setTimeout(function () {
+                    $.fn.tipsy.revalidate();
+                }, 2000);
+                
+                
             }
         },
         
@@ -201,7 +213,8 @@
         offset: 0,
         opacity: 0.8,
         title: 'title',
-        trigger: 'hover'
+        trigger: 'hover',
+        solo: true
     };
     
     $.fn.tipsy.revalidate = function() {
