@@ -25,13 +25,15 @@
     
     Tipsy.prototype = {
         show: function() {
-            var title = this.getTitle();
+            var title = this.getTitle(),
+            	pointee = this.tip().pointee();
             if (title && this.enabled) {
                 var $tip = this.tip();
                 
                 $tip.find('.tipsy-inner')[this.options.html ? 'html' : 'text'](title);
                 $tip[0].className = 'tipsy'; // reset classname in case of dynamic gravity
                 $tip.remove().css({top: 0, left: 0, visibility: 'hidden', display: 'block'}).prependTo(document.body);
+                $tip.data('tipsy-pointee', pointee);
                 
                 var pos = $.extend({}, this.$element.offset(), {
                     width: this.$element[0].offsetWidth,
@@ -83,16 +85,18 @@
                     $('.tipsy').not($tip).remove();
                 }
 
-                // belt and suspenders -- revalidate after two seconds on display of any tip, hopefully preventing unparented/zombie tips
-                setTimeout(function () {
-                    $.fn.tipsy.revalidate();
-                }, 2000);
-                
+		// belt and suspenders -- kill tips after maximum timeout
+		$tip.reap = setTimeout(function () {
+		    $tip.remove();
+		}, this.options.maxlife);
                 
             }
         },
         
         hide: function() {
+	    if (this.tip().reap) {
+            	clearTimeout(this.tip().reap);
+	    }
             if (this.options.fade) {
                 this.tip().stop().fadeOut(function() { $(this).remove(); });
             } else {
@@ -122,8 +126,11 @@
         
         tip: function() {
             if (!this.$tip) {
+            	var el = this.$element[0];
                 this.$tip = $('<div class="tipsy"></div>').html('<div class="tipsy-arrow"></div><div class="tipsy-inner"></div>');
-                this.$tip.data('tipsy-pointee', this.$element[0]);
+                this.$tip.pointee = function () {
+		    return el;
+		};
             }
             return this.$tip;
         },
@@ -214,7 +221,8 @@
         opacity: 0.8,
         title: 'title',
         trigger: 'hover',
-        solo: true
+        solo: true,
+        maxlife: 5000 /* max life for any tip, in ms */
     };
     
     $.fn.tipsy.revalidate = function() {
